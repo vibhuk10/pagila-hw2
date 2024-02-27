@@ -8,3 +8,21 @@
  * You might find the following stackoverflow answer useful for figuring out the syntax:
  * <https://stackoverflow.com/a/5700744>.
  */
+SELECT
+rank,
+title,
+revenue,
+sum(revenue) OVER (ORDER BY revenue DESC) AS "total revenue"
+FROM(
+SELECT
+    RANK() OVER (ORDER BY COALESCE(SUM(p.amount), 0.00) DESC) AS rank,
+    f.title,
+    COALESCE(SUM(p.amount), 0.00) AS revenue
+FROM film f
+LEFT JOIN inventory i ON f.film_id = i.film_id
+LEFT JOIN rental r ON i.inventory_id = r.inventory_id
+LEFT JOIN payment p ON r.rental_id = p.rental_id
+GROUP BY f.title
+ORDER BY revenue DESC
+) as data
+group by rank, title, revenue order by rank, title;

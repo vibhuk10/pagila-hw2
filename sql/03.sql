@@ -10,3 +10,23 @@
  * Next, join the film, inventory, rental, and customer tables.
  * Use a where clause to restrict results to the subquery.
  */
+SELECT DISTINCT c.customer_id
+FROM customer c
+JOIN rental r ON c.customer_id = r.customer_id
+JOIN inventory i ON r.inventory_id = i.inventory_id
+JOIN film f ON i.film_id = f.film_id
+WHERE f.film_id IN (
+    SELECT film_id
+    FROM (
+        SELECT f.film_id, 
+               RANK() OVER (ORDER BY SUM(p.amount) DESC) AS profit_rank
+        FROM film f
+        JOIN inventory inv ON f.film_id = inv.film_id
+        JOIN rental ren ON inv.inventory_id = ren.inventory_id
+        JOIN payment p ON ren.rental_id = p.rental_id
+        GROUP BY f.film_id
+    ) AS top_profitable
+    WHERE profit_rank <= 5
+)
+ORDER BY c.customer_id;
+
